@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 /// Transmutations require materials and produce a product.
 pub trait Transmutation {
-    fn materials(&self) -> Vec<TypeId>;
+    fn materials(&self) -> &[TypeId];
     fn product(&self) -> TypeId;
     fn transmute(&self, inputs: &[&dyn Any]) -> Box<dyn Any>;
 }
@@ -28,4 +28,14 @@ impl Tome {
         self.circles.push(Box::new(circle));
         page
     }
+
+    /// Give me what I want.
+    pub fn summon<T>(&self) -> T {
+        unimplemented!()
+    }
+}
+
+/// The materials that we have at a given stage of the transmutation process.
+struct Materials {
+    materials: HashMap<TypeId, Box<dyn Any>>,
 }
