@@ -31,11 +31,23 @@ impl Tome {
 
     /// Give me what I want.
     pub fn summon<T>(&self) -> T {
+        self.preserve(&mut Materials::new())
+    }
+
+    /// Give me what I want, but preserve the materials created in the transmutation.
+    pub fn preserve<T>(&self, materials: &mut Materials) -> T {
         unimplemented!()
     }
 }
 
-/// The materials that we have at a given stage of the transmutation process.
-struct Materials {
+/// The materials we have previously produced.
+#[derive(Default)]
+pub struct Materials {
     materials: HashMap<TypeId, Box<dyn Any>>,
+}
+
+impl Materials {
+    fn new() -> Self {
+        Self::default()
+    }
 }
