@@ -1,4 +1,4 @@
-use std::any::{TypeId, Any};
+use std::any::{Any, TypeId};
 use std::collections::HashMap;
 
 /// Transmutations require materials and produce a product.
@@ -29,5 +29,3 @@ impl Tome {
         page
     }
 }
-
-
