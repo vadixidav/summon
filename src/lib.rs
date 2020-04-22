@@ -1,5 +1,6 @@
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
+use std::iter::FromIterator;
 
 /// Transmutations require ingredients and produce a product.
 pub trait Transmutation {
@@ -16,20 +17,65 @@ pub struct Tome {
 
 impl Tome {
     /// Inscribe a note about a natural transmutation into the tome.
-    pub fn inscribe<T: Transmutation + 'static>(&mut self, note: T) {
-        self.circles
-            .entry(note.product())
-            .or_default()
-            .push(Box::new(note));
+    pub fn inscribe<T: Transmutation + 'static>(&mut self, circle: T) {
+        let product_circles = self.circles.entry(circle.product()).or_default();
+        product_circles.push(Box::new(circle));
+        product_circles.sort_by_key(|c| c.ingredients().len());
     }
 
     /// Give me what I want.
-    pub fn summon<T>(&self) -> Option<T> {
+    pub fn summon<T: 'static>(&self) -> Option<T> {
+        let recipe = self.research::<T>()?;
+        let mut materials: HashMap<TypeId, &dyn Any> = HashMap::new();
+        for (product, recipe) in recipe.transmutations {
+            let ingredients: Vec<&dyn Any> = recipe
+                .ingredients()
+                .iter()
+                .map(|ingredient| *materials.get(ingredient).unwrap())
+                .collect();
+            let product_box = recipe.transmute(&ingredients);
+        }
+        // Start by performing a depth-first search to aquire a recepie.
         unimplemented!()
     }
 
     /// Give me what I want, but inscribe the process so it can be more quickly executed in the future.
     pub fn preserve<T>(&mut self) -> Option<T> {
         unimplemented!()
+    }
+
+    fn research<T: 'static>(&self) -> Option<Recipe<'_>> {
+        self.research_id(TypeId::of::<T>())
+    }
+
+    fn research_id(&self, id: TypeId) -> Option<Recipe<'_>> {
+        self.circles.get(&id).and_then(|possibilities| {
+            possibilities.iter().find_map(|circle| {
+                let ingredients = circle.ingredients();
+                ingredients
+                    .iter()
+                    .fold(Some(Recipe::default()), |recipe, &ingredient| {
+                        recipe.and_then(|recipe| {
+                            self.research_id(ingredient).map(|next| recipe.join(next))
+                        })
+                    })
+            })
+        })
+    }
+}
+
+#[derive(Default)]
+struct Recipe<'a> {
+    transmutations: HashMap<TypeId, &'a dyn Transmutation>,
+}
+
+impl<'a> Recipe<'a> {
+    fn join(mut self, other: Self) -> Self {
+        for (product, transmutation) in other.transmutations {
+            self.transmutations
+                .entry(product)
+                .or_insert_with(move || transmutation);
+        }
+        self
     }
 }
