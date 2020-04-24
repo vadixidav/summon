@@ -156,12 +156,15 @@ macro_rules! transmutation_impl {
 /// ```
 #[macro_export]
 macro_rules! circle {
+    // Tag form
     ($($arg_name:ty),* => $return_ty:tt) => {
         $crate::transmutation_impl!(($(_ in $arg_name),*) -> $return_ty { $return_ty })
     };
+    // Pattern form
     ($($arg_name:tt $arg_pat:tt),* => $return_ty:tt $return_pat:tt) => {{
         $crate::transmutation_impl!(($($arg_name $arg_pat in $arg_name),*) -> $return_ty { $return_ty $return_pat })
     }};
+    // Closure form
     (|$($arg_name:tt: &$arg_ty:ty),*| -> $return_ty:tt $body:tt) => {{
         $crate::transmutation_impl!(($($arg_name in $arg_ty),*) -> $return_ty $body)
     }};
