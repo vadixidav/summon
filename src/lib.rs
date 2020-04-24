@@ -13,37 +13,30 @@ pub trait Transmutation {
 macro_rules! circle {
     (($($arg_name:tt $arg_colon:tt &$arg_ty:ty),*) -> $return_ty:ty $body:block) => {{
         paste::expr! {
-            circle_impl!(($([<temp_ident_ $arg_ty>]: $arg_name $arg_colon &$arg_ty),*) -> $return_ty $body)
-        }
-    }}
-}
-
-#[macro_export]
-macro_rules! circle_impl {
-    (($($arg_ident:ident: $arg_name:tt $arg_colon:tt &$arg_ty:ty),*) -> $return_ty:ty $body:block) => {
-        {
-            use std::any::{Any, TypeId};
-            struct Temporary<F>(F);
-            const TEMPORARY_INGREDIENTS: &[TypeId] = &[$(TypeId::of::<$arg_ty>()),*];
-            impl<F: Fn($(&$arg_ty),*) -> $return_ty> Transmutation for Temporary<F> {
-                fn ingredients(&self) -> &'static [TypeId] {
-                    TEMPORARY_INGREDIENTS
-                }
-                fn product(&self) -> TypeId {
-                    TypeId::of::<$return_ty>()
-                }
-                fn transmute(&self, inputs: &[&dyn Any]) -> Box<dyn Any> {
-                    if let [$($arg_ident),*] = inputs {
-                        $(let $arg_ident = $arg_ident.downcast_ref::<$arg_ty>().expect("transmute passed an incorrect type");)*
-                        Box::new((self.0)($($arg_ident),*)) as Box<dyn Any>
-                    } else {
-                        panic!("transmute passed incorrect number of arguments (expected: {}, found: {})", self.ingredients().len(), inputs.len());
+            {
+                use std::any::{Any, TypeId};
+                struct Temporary<F>(F);
+                const TEMPORARY_INGREDIENTS: &[TypeId] = &[$(TypeId::of::<$arg_ty>()),*];
+                impl<F: Fn($(&$arg_ty),*) -> $return_ty> Transmutation for Temporary<F> {
+                    fn ingredients(&self) -> &'static [TypeId] {
+                        TEMPORARY_INGREDIENTS
+                    }
+                    fn product(&self) -> TypeId {
+                        TypeId::of::<$return_ty>()
+                    }
+                    fn transmute(&self, inputs: &[&dyn Any]) -> Box<dyn Any> {
+                        if let [$([<temp_ident_ $arg_ty>]),*] = inputs {
+                            $(let [<temp_ident_ $arg_ty>] = [<temp_ident_ $arg_ty>].downcast_ref::<$arg_ty>().expect("transmute passed an incorrect type");)*
+                            Box::new((self.0)($([<temp_ident_ $arg_ty>]),*)) as Box<dyn Any>
+                        } else {
+                            panic!("transmute passed incorrect number of arguments (expected: {}, found: {})", self.ingredients().len(), inputs.len());
+                        }
                     }
                 }
+                Temporary(|$($arg_name $arg_colon &$arg_ty),*| -> $return_ty {$body})
             }
-            Temporary(|$($arg_name $arg_colon &$arg_ty),*| -> $return_ty {$body})
         }
-    };
+    }}
 }
 
 /// This is where all of the transmutation circles are inscribed.

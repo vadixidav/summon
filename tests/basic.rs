@@ -1,6 +1,6 @@
 #![feature(const_type_id, concat_idents)]
 
-use summon::*;
+use summon::{circle, Tome, Transmutation};
 
 struct A;
 
