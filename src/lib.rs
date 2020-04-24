@@ -9,6 +9,20 @@ pub trait Transmutation {
     fn transmute(&self, inputs: &[&dyn Any]) -> Box<dyn Any>;
 }
 
+struct Ether<T>(T);
+
+impl<T: Clone + 'static> Transmutation for Ether<T> {
+    fn ingredients(&self) -> &'static [TypeId] {
+        &[]
+    }
+    fn product(&self) -> TypeId {
+        TypeId::of::<T>()
+    }
+    fn transmute(&self, _: &[&dyn Any]) -> Box<dyn Any> {
+        Box::new(self.0.clone())
+    }
+}
+
 #[macro_export]
 macro_rules! circle {
     (($($arg_name:tt $arg_colon:tt &$arg_ty:ty),*) -> $return_ty:tt $body:block) => {{
@@ -63,6 +77,11 @@ impl Tome {
         let product_circles = self.circles.entry(circle.product()).or_default();
         product_circles.push(Box::new(circle));
         product_circles.sort_by_key(|c| c.ingredients().len());
+    }
+
+    /// Create a note about how to create something out of the ether.
+    pub fn ether<T: Clone + 'static>(&mut self, item: T) {
+        self.inscribe(Ether(item));
     }
 
     /// Give me what I want.
