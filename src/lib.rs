@@ -70,6 +70,35 @@ impl<T: Clone + 'static> Transmutation for Ether<T> {
     }
 }
 
+#[macro_export]
+#[doc(hidden)]
+macro_rules! transmutation_impl {
+    (($($arg_real_pat:pat in $arg_ty:tt),*) -> $return_ty:tt $body:tt) => {{
+        paste::expr! {{
+            use std::any::{Any, TypeId};
+            struct Temporary<F>(F);
+            const TEMPORARY_INGREDIENTS: &[TypeId] = &[$(TypeId::of::<$arg_ty>()),*];
+            impl<F: Fn($(&$arg_ty),*) -> $return_ty> $crate::Transmutation for Temporary<F> {
+                fn ingredients(&self) -> &'static [TypeId] {
+                    TEMPORARY_INGREDIENTS
+                }
+                fn product(&self) -> TypeId {
+                    TypeId::of::<$return_ty>()
+                }
+                fn transmute(&self, inputs: &[&dyn Any]) -> Box<dyn Any> {
+                    if let [$([<temp_ident_ $arg_ty>]),*] = inputs {
+                        $(let [<temp_ident_ $arg_ty>] = [<temp_ident_ $arg_ty>].downcast_ref::<$arg_ty>().expect("transmute passed an incorrect type");)*
+                        Box::new((self.0)($([<temp_ident_ $arg_ty>]),*)) as Box<dyn Any>
+                    } else {
+                        panic!("transmute passed incorrect number of arguments (expected: {}, found: {})", self.ingredients().len(), inputs.len());
+                    }
+                }
+            }
+            Temporary(|$($arg_real_pat: &$arg_ty),*| -> $return_ty $body)
+        }}
+    }};
+}
+
 /// Use this to inscribe a transmutation between a set of input types and an output type.
 ///
 /// ```
@@ -81,39 +110,16 @@ impl<T: Clone + 'static> Transmutation for Ether<T> {
 /// struct Half(u32);
 /// let mut tome = Tome::new();
 /// tome.ether(Normal(4));
-/// tome.inscribe(summon::circle!((n: &Normal) -> Double { Double(n.0 * 2) }));
-/// tome.inscribe(summon::circle!((n: &Normal) -> Half { Half(n.0 / 2) }));
+/// tome.inscribe(summon::circle!(|n: &Normal| -> Double { Double(n.0 * 2) }));
+/// tome.inscribe(summon::circle!(|n: &Normal| -> Half { Half(n.0 / 2) }));
 /// assert_eq!(8, tome.summon::<Double>().unwrap().0);
 /// assert_eq!(2, tome.summon::<Half>().unwrap().0);
 /// ```
 #[macro_export]
 macro_rules! circle {
-    (($($arg_name:tt $arg_colon:tt &$arg_ty:ty),*) -> $return_ty:tt $body:block) => {{
-        paste::expr! {
-            {
-                use std::any::{Any, TypeId};
-                struct Temporary<F>(F);
-                const TEMPORARY_INGREDIENTS: &[TypeId] = &[$(TypeId::of::<$arg_ty>()),*];
-                impl<F: Fn($(&$arg_ty),*) -> $return_ty> $crate::Transmutation for Temporary<F> {
-                    fn ingredients(&self) -> &'static [TypeId] {
-                        TEMPORARY_INGREDIENTS
-                    }
-                    fn product(&self) -> TypeId {
-                        TypeId::of::<$return_ty>()
-                    }
-                    fn transmute(&self, inputs: &[&dyn Any]) -> Box<dyn Any> {
-                        if let [$([<temp_ident_ $arg_ty>]),*] = inputs {
-                            $(let [<temp_ident_ $arg_ty>] = [<temp_ident_ $arg_ty>].downcast_ref::<$arg_ty>().expect("transmute passed an incorrect type");)*
-                            Box::new((self.0)($([<temp_ident_ $arg_ty>]),*)) as Box<dyn Any>
-                        } else {
-                            panic!("transmute passed incorrect number of arguments (expected: {}, found: {})", self.ingredients().len(), inputs.len());
-                        }
-                    }
-                }
-                Temporary(|$($arg_name $arg_colon &$arg_ty),*| -> $return_ty {$body})
-            }
-        }
-    }}
+    (|$($arg_name:tt: &$arg_ty:ty),*| -> $return_ty:tt $body:tt) => {{
+        $crate::transmutation_impl!(($($arg_name in $arg_ty),*) -> $return_ty $body)
+    }};
 }
 
 /// Use this to inscribe tag type/zero-sized struct (`struct A;`) conversions. Useful for logic.
@@ -126,14 +132,21 @@ macro_rules! circle {
 /// struct B;
 /// let mut tome = Tome::new();
 /// tome.ether(A);
-/// tome.inscribe(fusion!((A) -> B));
+/// tome.inscribe(fusion!(A => B));
 /// tome.summon::<B>().unwrap();
 /// ```
 #[macro_export]
 macro_rules! fusion {
-    (($($arg_ty:ty),*) -> $return_ty:expr) => {
-        $crate::circle!(($(_: &$arg_ty),*) -> $return_ty { $return_ty })
+    ($($arg_name:ty),* => $return_ty:tt) => {
+        $crate::transmutation_impl!(($(_ in $arg_name),*) -> $return_ty { $return_ty })
     };
+}
+
+#[macro_export]
+macro_rules! bend {
+    (($($arg_name:tt $arg_pat:tt),*) -> $return_ty:tt $return_pat:tt) => {{
+        $crate::transmutation_impl!(($($arg_name $arg_pat in $arg_name),*) -> $return_ty { $return_ty $return_pat })
+    }};
 }
 
 /// This is where all of the transmutation circles are inscribed.
