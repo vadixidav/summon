@@ -1,6 +1,6 @@
 #![feature(const_type_id)]
 
-use summon::{bend, circle, fusion, Tome};
+use summon::{circle, Tome};
 
 #[derive(Clone)]
 struct A;
@@ -16,7 +16,7 @@ fn fuse() {
     let mut tome = Tome::new();
     tome.ether(A);
     tome.ether(B);
-    tome.inscribe(fusion!(A, B => C));
+    tome.inscribe(circle!(A, B => C));
     println!("{:?}", tome.summon::<C>().unwrap());
 }
 
@@ -62,7 +62,7 @@ fn sum_bend() {
     tome.ether(InitialPosition(6.0));
     tome.ether(Time(4.0));
     tome.inscribe(
-        bend!((ConstantAcceleration(a), InitialVelocity(v), InitialPosition(p), Time(t)) -> Distance(0.5 * a * t.powi(2) + v * t + p)),
+        circle!(ConstantAcceleration(a), InitialVelocity(v), InitialPosition(p), Time(t) => Distance(0.5 * a * t.powi(2) + v * t + p)),
     );
     assert_eq!(
         0.5 * 3.0 * 4.0f64.powi(2) + 5.0 * 4.0 + 6.0,
