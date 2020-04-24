@@ -1,8 +1,55 @@
+//! # summon
+//!
+//! A logic engine designed to magically give you what you ask for
+//!
+//! ```
+//! #[derive(Clone)]
+//! struct ConstantAcceleration(f64);
+//! #[derive(Clone)]
+//! struct InitialVelocity(f64);
+//! #[derive(Clone)]
+//! struct InitialPosition(f64);
+//! #[derive(Clone)]
+//! struct Time(f64);
+//!
+//! struct Distance(f64);
+//! struct RealPhysicsOn;
+//!
+//! #[test]
+//! fn sum() {
+//!     // The tome is where all the logic and conversions are written in your code.
+//!     let mut tome = Tome::new();
+//!
+//!     // You can use ether() to give types as givens.
+//!     tome.ether(ConstantAcceleration(3.0));
+//!     tome.ether(InitialVelocity(5.0));
+//!     tome.ether(InitialPosition(6.0));
+//!     tome.ether(Time(4.0));
+//!     tome.ether(RealPhysicsOn);
+//!
+//!     // Inscribe is used to describe a conversion between types.
+//!     // If a function produces multiple types via tuple, two extra inscriptions can be made to break it up into two types.
+//!     tome.inscribe(
+//!         circle!((_: &RealPhysicsOn, a: &ConstantAcceleration, v: &InitialVelocity, p: &InitialPosition, t: &Time) -> Distance {
+//!             Distance(0.5 * a.0 * t.0.powi(2) + v.0 * t.0 + p.0)
+//!         }),
+//!     );
+//!
+//!     // So long as it is possible to produce the result with the given inscriptions, it will be produced.
+//!     let summoned = tome.summon::<Distance>().unwrap();
+//!     assert_eq!(
+//!         0.5 * 3.0 * 4.0f64.powi(2) + 5.0 * 4.0 + 6.0,
+//!         summoned,
+//!     );
+//! }
+//! ```
+//!
+
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::iter::FromIterator;
 
-/// Transmutations require ingredients and produce a product.
+/// Transmutations require ingredients and produce a product. This is usually a function.
 pub trait Transmutation {
     fn ingredients(&self) -> &'static [TypeId];
     fn product(&self) -> TypeId;
@@ -23,6 +70,22 @@ impl<T: Clone + 'static> Transmutation for Ether<T> {
     }
 }
 
+/// Use this to inscribe a transmutation between a set of input types and an output type.
+///
+/// ```
+/// # #![feature(const_type_id)]
+/// use summon::{Tome, circle};
+/// #[derive(Clone)]
+/// struct Normal(u32);
+/// struct Double(u32);
+/// struct Half(u32);
+/// let mut tome = Tome::new();
+/// tome.ether(Normal(4));
+/// tome.inscribe(summon::circle!((n: &Normal) -> Double { Double(n.0 * 2) }));
+/// tome.inscribe(summon::circle!((n: &Normal) -> Half { Half(n.0 / 2) }));
+/// assert_eq!(8, tome.summon::<Double>().unwrap().0);
+/// assert_eq!(2, tome.summon::<Half>().unwrap().0);
+/// ```
 #[macro_export]
 macro_rules! circle {
     (($($arg_name:tt $arg_colon:tt &$arg_ty:ty),*) -> $return_ty:tt $body:block) => {{
@@ -53,16 +116,17 @@ macro_rules! circle {
     }}
 }
 
-/// Use this to describe tag type/zero-sized struct (`struct A;`) conversions.
+/// Use this to inscribe tag type/zero-sized struct (`struct A;`) conversions. Useful for logic.
 ///
 /// ```
 /// # #![feature(const_type_id)]
+/// use summon::{Tome, fusion};
 /// #[derive(Clone)]
 /// struct A;
 /// struct B;
-/// let mut tome = summon::Tome::new();
+/// let mut tome = Tome::new();
 /// tome.ether(A);
-/// tome.inscribe(summon::fusion!((A) -> B));
+/// tome.inscribe(fusion!((A) -> B));
 /// tome.summon::<B>().unwrap();
 /// ```
 #[macro_export]
@@ -80,6 +144,7 @@ pub struct Tome {
 }
 
 impl Tome {
+    /// Create an empty tome.
     pub fn new() -> Self {
         Self::default()
     }
