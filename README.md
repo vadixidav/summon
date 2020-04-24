@@ -63,8 +63,9 @@ assert_eq!(
 );
 ```
 
-Disclaimer:
+### Code Disclaimer
 
+Rust was not meant to do this. Turn back now!
 The code is known to induce illness to the reader if they are a software engineer. Please proceed with caution.
-I am not responsible if reading of the code causes terminal illness to include cancer, dementia, and chronic facial convulsions.
-You, the reader, proceed at your own risk.
+I am not responsible if reading of the code causes chronic facial convulsions and/or death.
+The reader must proceed at their own risk. You have been warned!
