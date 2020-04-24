@@ -93,7 +93,7 @@ impl Tome {
     }
 
     /// Give me what I want and more.
-    pub fn preserve<T: 'static>(&self) -> Option<Materials> {
+    fn preserve<T: 'static>(&self) -> Option<Materials> {
         // Find a recipe to create the item. This may fail.
         let recipe: Recipe = self.research::<T>()?;
         // Perform the whole recipe. This cannot fail, excpet via panic.
