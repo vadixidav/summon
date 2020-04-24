@@ -1,4 +1,4 @@
-#![feature(const_type_id, concat_idents)]
+#![feature(const_type_id)]
 
 use summon::{circle, fusion, Tome, Transmutation};
 
