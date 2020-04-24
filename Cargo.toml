@@ -3,6 +3,13 @@ name = "summon"
 version = "0.1.0"
 authors = ["Geordon Worley <vadixidav@gmail.com>"]
 edition = "2018"
+description = "A logic engine designed to magically give you what you ask for"
+documentation = "https://docs.rs/summon/"
+repository = "https://github.com/vadixidav/summon"
+keywords = ["logic", "black", "dark", "horrible", "magic"]
+categories = ["rust-patterns"]
+license = "MIT"
+readme = "README.md"
 
 [dependencies]
 paste = "0.1.10"
