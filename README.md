@@ -1,5 +1,20 @@
 # summon
 
+[![Crates.io][ci]][cl] ![MIT/Apache][li] [![docs.rs][di]][dl] ![LoC][lo] ![Tests][btl] ![Lints][bll]
+
+[ci]: https://img.shields.io/crates/v/summon.svg
+[cl]: https://crates.io/crates/summon/
+
+[li]: https://img.shields.io/crates/l/specs.svg?maxAge=2592000
+
+[di]: https://docs.rs/summon/badge.svg
+[dl]: https://docs.rs/summon/
+
+[lo]: https://tokei.rs/b1/github/vadixidav/summon?category=code
+
+[btl]: https://github.com/vadixidav/summon/workflows/unit%20tests/badge.svg
+[bll]: https://github.com/vadixidav/summon/workflows/lints/badge.svg
+
 A logic engine designed to magically give you what you ask for
 
 Nightly is required because the code does some questionable things.
