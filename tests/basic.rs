@@ -1,6 +1,6 @@
 #![feature(const_type_id)]
 
-use summon::{circle, fusion, Tome, Transmutation};
+use summon::{circle, fusion, Tome};
 
 #[derive(Clone)]
 struct A;

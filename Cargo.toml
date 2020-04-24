@@ -13,3 +13,4 @@ readme = "README.md"
 
 [dependencies]
 paste = "0.1.10"
+stowaway = "2.0.0"

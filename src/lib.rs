@@ -31,7 +31,7 @@ macro_rules! circle {
                 use std::any::{Any, TypeId};
                 struct Temporary<F>(F);
                 const TEMPORARY_INGREDIENTS: &[TypeId] = &[$(TypeId::of::<$arg_ty>()),*];
-                impl<F: Fn($(&$arg_ty),*) -> $return_ty> Transmutation for Temporary<F> {
+                impl<F: Fn($(&$arg_ty),*) -> $return_ty> $crate::Transmutation for Temporary<F> {
                     fn ingredients(&self) -> &'static [TypeId] {
                         TEMPORARY_INGREDIENTS
                     }
@@ -53,6 +53,18 @@ macro_rules! circle {
     }}
 }
 
+/// Use this to describe tag type/zero-sized struct (`struct A;`) conversions.
+///
+/// ```
+/// # #![feature(const_type_id)]
+/// #[derive(Clone)]
+/// struct A;
+/// struct B;
+/// let mut tome = summon::Tome::new();
+/// tome.ether(A);
+/// tome.inscribe(summon::fusion!((A) -> B));
+/// tome.summon::<B>().unwrap();
+/// ```
 #[macro_export]
 macro_rules! fusion {
     (($($arg_ty:ty),*) -> $return_ty:expr) => {
