@@ -86,19 +86,20 @@ impl Tome {
 
     /// Give me what I want.
     pub fn summon<T: 'static>(&self) -> Option<T> {
-        // Find a recipe to create the item. This may fail.
-        let recipe: Recipe = self.research::<T>()?;
-        eprintln!("steps: {}", recipe.steps.len());
-        // Perform the whole recipe. This cannot fail, excpet via panic.
-        let materials: Materials = recipe.steps.into_iter().collect();
-        eprintln!("materials: {}", materials.materials.len());
+        // Preserve all the materials we need and the thing we are summoning.
+        let materials = self.preserve::<T>()?;
         // Drop all the intermediate materials to get only the desired one.
         Some(materials.into_material::<T>())
     }
 
-    /// Give me what I want, but inscribe the process so it can be more quickly executed in the future.
-    pub fn preserve<T>(&self) -> Option<T> {
-        unimplemented!()
+    /// Give me what I want and more.
+    pub fn preserve<T: 'static>(&self) -> Option<Materials> {
+        // Find a recipe to create the item. This may fail.
+        let recipe: Recipe = self.research::<T>()?;
+        // Perform the whole recipe. This cannot fail, excpet via panic.
+        let materials: Materials = recipe.steps.into_iter().collect();
+        // Create all the materials in the recipe.
+        Some(materials)
     }
 
     fn research<T: 'static>(&self) -> Option<Recipe<'_>> {
@@ -159,7 +160,7 @@ impl<'a> Recipe<'a> {
 }
 
 #[derive(Default)]
-struct Materials {
+pub struct Materials {
     materials: HashMap<TypeId, Box<dyn Any>>,
 }
 
