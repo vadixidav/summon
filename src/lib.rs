@@ -56,7 +56,7 @@ macro_rules! circle {
 #[macro_export]
 macro_rules! fusion {
     (($($arg_ty:ty),*) -> $return_ty:expr) => {
-        circle!(($(_: &$arg_ty),*) -> $return_ty { $return_ty })
+        $crate::circle!(($(_: &$arg_ty),*) -> $return_ty { $return_ty })
     };
 }
 
