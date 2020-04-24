@@ -11,7 +11,7 @@ pub trait Transmutation {
 
 #[macro_export]
 macro_rules! circle {
-    (($($arg_name:tt $arg_colon:tt &$arg_ty:ty),*) -> $return_ty:ty $body:block) => {{
+    (($($arg_name:tt $arg_colon:tt &$arg_ty:ty),*) -> $return_ty:tt $body:block) => {{
         paste::expr! {
             {
                 use std::any::{Any, TypeId};
@@ -37,6 +37,13 @@ macro_rules! circle {
             }
         }
     }}
+}
+
+#[macro_export]
+macro_rules! fusion {
+    (($($arg_ty:ty),*) -> $return_ty:expr) => {
+        circle!(($(_: &$arg_ty),*) -> $return_ty { $return_ty })
+    };
 }
 
 /// This is where all of the transmutation circles are inscribed.

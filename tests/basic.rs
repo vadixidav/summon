@@ -1,6 +1,6 @@
 #![feature(const_type_id, concat_idents)]
 
-use summon::{circle, Tome, Transmutation};
+use summon::{circle, fusion, Tome, Transmutation};
 
 struct A;
 
@@ -10,10 +10,10 @@ struct B;
 struct C;
 
 #[test]
-fn addition() {
+fn fuse() {
     let mut tome = Tome::new();
-    tome.inscribe(circle!(() -> A { A }));
-    tome.inscribe(circle!(() -> B { B }));
-    tome.inscribe(circle!((_: &A, _: &B) -> C { C }));
+    tome.inscribe(fusion!(() -> A));
+    tome.inscribe(fusion!(() -> B));
+    tome.inscribe(fusion!((A, B) -> C));
     println!("{:?}", tome.summon::<C>().unwrap());
 }
