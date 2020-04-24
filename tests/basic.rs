@@ -1,4 +1,4 @@
-#![feature(const_type_id)]
+#![feature(const_type_id, concat_idents)]
 
 use summon::*;
 
@@ -14,6 +14,6 @@ fn addition() {
     let mut tome = Tome::new();
     tome.inscribe(circle!(() -> A { A }));
     tome.inscribe(circle!(() -> B { B }));
-    tome.inscribe(circle!((a: &A, b: &B) -> C { C }));
+    tome.inscribe(circle!((_: &A, _: &B) -> C { C }));
     println!("{:?}", tome.summon::<C>().unwrap());
 }

@@ -2,6 +2,8 @@
 
 A logic engine designed to magically give you what you ask for
 
+Nightly is required because the code does some questionable things.
+
 Do you want to study the dark arts? If so, then read the code!
 
 Disclaimer:

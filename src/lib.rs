@@ -11,7 +11,16 @@ pub trait Transmutation {
 
 #[macro_export]
 macro_rules! circle {
-    (($($arg_name:ident: &$arg_ty:ty),*) -> $return_ty:ty $body:block) => {
+    (($($arg_name:tt $arg_colon:tt &$arg_ty:ty),*) -> $return_ty:ty $body:block) => {{
+        paste::expr! {
+            circle_impl!(($([<temp_ident_ $arg_ty>]: $arg_name $arg_colon &$arg_ty),*) -> $return_ty $body)
+        }
+    }}
+}
+
+#[macro_export]
+macro_rules! circle_impl {
+    (($($arg_ident:ident: $arg_name:tt $arg_colon:tt &$arg_ty:ty),*) -> $return_ty:ty $body:block) => {
         {
             use std::any::{Any, TypeId};
             struct Temporary<F>(F);
@@ -24,15 +33,15 @@ macro_rules! circle {
                     TypeId::of::<$return_ty>()
                 }
                 fn transmute(&self, inputs: &[&dyn Any]) -> Box<dyn Any> {
-                    if let [$($arg_name),*] = inputs {
-                        $(let $arg_name = $arg_name.downcast_ref::<$arg_ty>().expect("transmute passed an incorrect type");)*
-                        Box::new((self.0)($($arg_name),*)) as Box<dyn Any>
+                    if let [$($arg_ident),*] = inputs {
+                        $(let $arg_ident = $arg_ident.downcast_ref::<$arg_ty>().expect("transmute passed an incorrect type");)*
+                        Box::new((self.0)($($arg_ident),*)) as Box<dyn Any>
                     } else {
                         panic!("transmute passed incorrect number of arguments (expected: {}, found: {})", self.ingredients().len(), inputs.len());
                     }
                 }
             }
-            Temporary(|$($arg_name: &$arg_ty),*| -> $return_ty {$body})
+            Temporary(|$($arg_name $arg_colon &$arg_ty),*| -> $return_ty {$body})
         }
     };
 }
