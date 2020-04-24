@@ -60,8 +60,10 @@ impl Tome {
     pub fn summon<T: 'static>(&self) -> Option<T> {
         // Find a recipe to create the item. This may fail.
         let recipe: Recipe = self.research::<T>()?;
+        eprintln!("steps: {}", recipe.steps.len());
         // Perform the whole recipe. This cannot fail, excpet via panic.
-        let materials: Materials = recipe.transmutations.values().copied().collect();
+        let materials: Materials = recipe.steps.into_iter().collect();
+        eprintln!("materials: {}", materials.materials.len());
         // Drop all the intermediate materials to get only the desired one.
         Some(materials.into_material::<T>())
     }
@@ -95,25 +97,36 @@ impl Tome {
 
 #[derive(Default)]
 struct Recipe<'a> {
-    transmutations: HashMap<TypeId, &'a dyn Transmutation>,
+    steps: Vec<&'a dyn Transmutation>,
+    products: HashMap<TypeId, usize>,
 }
 
 impl<'a> From<&'a dyn Transmutation> for Recipe<'a> {
     fn from(circle: &'a dyn Transmutation) -> Self {
         let mut recipe = Self::default();
-        recipe.transmutations.insert(circle.product(), circle);
+        recipe.products.insert(circle.product(), 0);
+        recipe.steps.push(circle);
         recipe
     }
 }
 
 impl<'a> Recipe<'a> {
-    fn join(mut self, other: Self) -> Self {
-        for (product, transmutation) in other.transmutations {
-            self.transmutations
-                .entry(product)
-                .or_insert_with(move || transmutation);
+    fn join(self, other: Self) -> Self {
+        let Self {
+            mut steps,
+            mut products,
+        } = self;
+        let Self {
+            steps: other_steps,
+            products: other_products,
+        } = other;
+        for (product, step) in other_products {
+            products.entry(product).or_insert_with(|| {
+                steps.push(other_steps[step]);
+                steps.len() - 1
+            });
         }
-        self
+        Self { steps, products }
     }
 }
 
